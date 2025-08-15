@@ -1,0 +1,23 @@
+# BNF tested from https://bnfplayground.pauliankline.com/
+
+<whitespace> ::= " " | "\t" | "\r" # done
+
+<whitespaces> ::=  <whitespace> | <whitespace> <whitespaces>  # done
+
+<command_name> ::=  ([a-z] | [A-Z]) | ([a-z] | [A-Z]) ([a-z] | [A-Z] | [0-9] | "_" )+  # done
+
+<subcommand_name> ::= ([a-z] | [A-Z]) | ([a-z] | [A-Z]) ([a-z] | [A-Z] | [0-9] | "_" )+  # done
+
+<keyword> ::= ([a-z] | [A-Z]) | ([a-z] | [A-Z]) ([a-z] | [A-Z] | [0-9] | "_" )+ # done
+
+<value> ::= ([a-z] | [A-Z] | [0-9] | "_" )+ # done
+
+<kwargs> ::= <kwarg> | <kwarg> <whitespaces> <kwargs> # done
+
+<kwarg> ::= <keyword> <whitespaces> ":" <whitespaces> <value> | <keyword> ":" <whitespaces> <value> | <keyword> <whitespaces> ":"  <value> | <keyword> ":"  <value> # done
+
+<subcommand_group_name> ::= ([a-z] | [A-Z]) | ([a-z] | [A-Z]) ([a-z] | [A-Z] | [1-9] | "_" )+ # done
+
+<subcommand_group> ::= <subcommand_group_name> <whitespaces> <subcommand_name> <whitespaces> <kwargs> 
+
+<command_expr> ::= <command_name> <whitespaces> <subcommand_group> | <command_name> <whitespaces> <subcommand_name> <whitespaces> <kwargs> | <command_name> <whitespaces> <kwargs>
