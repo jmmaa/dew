@@ -258,10 +258,3 @@ class Parser:
 
         except Exception as e:
             raise e
-
-
-parser = Parser(iter("toram autostat flat_dex:24 percent_dex:23"))
-
-
-print(parser.parse_command())
-print(list(parser.chars))
