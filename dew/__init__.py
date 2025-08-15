@@ -208,7 +208,7 @@ class Parser:
                 "kwargs": kwargs,
             }
 
-        except Exception as e:
+        except Exception:
             pass
 
         # try parsing as subcommand
