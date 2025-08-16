@@ -22,10 +22,6 @@ print(result)
 # }
 ```
 
-# Installation
-
-> pip install dew
-
 ### Links
 
 [BNF grammar](grammar.bnf)
