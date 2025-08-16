@@ -2,22 +2,31 @@ import itertools
 import string
 import typing
 import dataclasses
-
-
-T = typing.TypeVar("T")
+import typing
 
 
 whitespace_chars = [" ", "\t", "\r"]
 
 
+class ParseResult(typing.TypedDict):
+
+    command_name: str
+
+    sub_command_name: str | None
+
+    sub_command_group_name: str | None
+
+    kwargs: list[tuple[str, str]]
+
+
+
 @dataclasses.dataclass
-class Parser:
+class ParserContext:
     chars: typing.Iterator[str]
 
     def peek(self):
         try:
             peeked = next(self.chars)
-
             self.chars = itertools.chain([peeked], self.chars)
 
             return peeked
@@ -26,13 +35,11 @@ class Parser:
             return None
 
     def consume(self):
-        try:
-            consumed = next(self.chars)
 
-            return consumed
+        consumed = next(self.chars)
 
-        except StopIteration:
-            return None
+        return consumed
+
 
     def escape_whitespaces(self):
         peeked = self.peek()
@@ -87,13 +94,16 @@ class Parser:
             if peeked in string.ascii_letters + string.digits + "_":
                 consumed = self.consume()
 
-                if consumed:
-                    acc = acc + consumed
+                acc = acc + consumed
 
-                    return self.__parse_value_recursive(acc)
+                return self.__parse_value_recursive(acc)
 
-                else:
-                    raise Exception("expected a valid value")
+
+            # for handling quoted inputs
+            if peeked == "\"":
+                consumed = self.consume() # escape quote
+
+                return self.__parse_quoted_value_recursive(acc)
 
             else:
                 raise Exception(
@@ -102,6 +112,26 @@ class Parser:
 
         else:
             raise Exception("no characters left to construct a valid value")
+
+    def __parse_quoted_value_recursive(self, acc: str = "") -> str:
+        peeked = self.peek()
+
+        if peeked:
+            if peeked != '"':
+                consumed = self.consume()
+
+
+                acc = acc + consumed
+
+                return self.__parse_quoted_value_recursive(acc)
+
+            else:
+                consumed = self.consume() # escape quote
+
+                return acc
+
+
+        raise Exception("expected a '\"'")
 
     def __parse_value_recursive(self, acc: str = "") -> str:
         peeked = self.peek()
@@ -113,7 +143,7 @@ class Parser:
                 if consumed:
                     acc = acc + consumed
 
-                    return self.__parse_keyword_recursive(acc)
+                    return self.__parse_value_recursive(acc)
 
         return acc
 
@@ -165,30 +195,14 @@ class Parser:
     def parse_command_name(self, acc: str = "") -> str:
         return self.parse_keyword(acc)
 
-    def parse_subcommand_name(self, acc: str = "") -> str:
+    def parse_sub_command_name(self, acc: str = "") -> str:
         return self.parse_keyword(acc)
 
-    def parse_subcommand_group_name(self, acc: str = "") -> str:
+    def parse_sub_command_group_name(self, acc: str = "") -> str:
         return self.parse_keyword(acc)
 
-    def parse_subcommand_group(self) -> dict:
-        subcommand_group_name = self.parse_subcommand_name()
 
-        self.escape_whitespaces()
-
-        subcommand_name = self.parse_subcommand_name()
-
-        self.escape_whitespaces()
-
-        kwargs = self.parse_kwargs()
-
-        return {
-            "name": subcommand_group_name,
-            "subcommand": subcommand_name,
-            "kwargs": kwargs,
-        }
-
-    def parse_command(self) -> dict:
+    def parse_command(self) -> ParseResult:
         # try parsing as command
 
         old, to_parse = itertools.tee(self.chars)
@@ -203,8 +217,8 @@ class Parser:
 
             return {
                 "command_name": command_name,
-                "subcommand_group_name": None,
-                "subcommand_name": None,
+                "sub_command_name": None,
+                "sub_command_group_name": None,
                 "kwargs": kwargs,
             }
 
@@ -223,7 +237,7 @@ class Parser:
 
             self.escape_whitespaces()
 
-            subcommand_name = self.parse_subcommand_name()
+            subcommand_name = self.parse_sub_command_name()
 
             self.escape_whitespaces()
 
@@ -231,14 +245,12 @@ class Parser:
 
             return {
                 "command_name": command_name,
-                "subcommand_group_name": None,
-                "subcommand_name": subcommand_name,
+                "sub_command_name": subcommand_name,
+                "sub_command_group_name": None,
                 "kwargs": kwargs,
             }
 
         except Exception as e:
-            print(list(self.chars))
-            print("from sub command parser: ", e)
             pass
 
         self.chars = old
@@ -252,9 +264,34 @@ class Parser:
 
             self.escape_whitespaces()
 
-            subcommand_group = self.parse_subcommand_group()
+            subcommand_group_name = self.parse_sub_command_group_name()
 
-            return {"command": {"name": command_name, "sub_command": subcommand_group}}
+            self.escape_whitespaces()
+
+            subcommand_name = self.parse_sub_command_name()
+
+            self.escape_whitespaces()
+
+            kwargs = self.parse_kwargs()
+
+            return {
+                "command_name": command_name,
+                "sub_command_name": subcommand_name,
+                "sub_command_group_name": subcommand_group_name,
+                "kwargs": kwargs,
+            }
 
         except Exception as e:
             raise e
+
+
+
+def parse(input: str):
+
+    chars = iter(input)
+
+    parser_context = ParserContext(chars)
+
+    result = parser_context.parse_command()
+
+    return result
