@@ -9,7 +9,7 @@ class ParseResult(typing.TypedDict):
 
     sub_command_group_name: str | None
 
-    kwargs: list[tuple[str, str]] | None
+    kwargs: list[tuple[str, str]]
 
 
 class ParserContext:
@@ -262,7 +262,7 @@ def parse_command(ctx: ParserContext) -> ParseResult:
             "command_name": command_name,
             "sub_command_name": sub_command_name,
             "sub_command_group_name": sub_command_group_name,
-            "kwargs": None,
+            "kwargs": [],
         }
 
     except Exception:
@@ -316,7 +316,7 @@ def parse_command(ctx: ParserContext) -> ParseResult:
             "command_name": command_name,
             "sub_command_name": sub_command_name,
             "sub_command_group_name": None,
-            "kwargs": None,
+            "kwargs": [],
         }
 
     except Exception:
@@ -366,7 +366,7 @@ def parse_command(ctx: ParserContext) -> ParseResult:
             "command_name": command_name,
             "sub_command_name": None,
             "sub_command_group_name": None,
-            "kwargs": None,
+            "kwargs": [],
         }
 
     except Exception:
