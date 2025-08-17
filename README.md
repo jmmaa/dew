@@ -11,8 +11,8 @@ print(result)
 
 # {
 #     'command_name': 'add',
-#     'subcommand_group_name': 'rgb',
-#     'subcommand_name': 'color',
+#     'sub_command_group_name': 'rgb',
+#     'sub_command_name': 'color',
 #     'kwargs': [
 #         ('name', 'my color'),
 #         ('r', '100'),
