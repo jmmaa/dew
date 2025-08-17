@@ -6,7 +6,7 @@ with open("README.md", "r") as f:
 
     setup(
         name="dew-py",
-        version="0.0.1_dev1.0.0",
+        version="0.0.1_dev1",
         description="A simple parser for discord slash command-like text, written in pure python",
         description_content_type="text/markdown",
         # url="url here",
