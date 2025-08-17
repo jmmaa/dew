@@ -16,4 +16,10 @@
 
 <subcommand_group_name> ::= ([a-z] | [A-Z]) | ([a-z] | [A-Z]) ([a-z] | [A-Z] | [1-9] | "_" )+
 
-<command> ::= <command_name> <whitespaces> <subcommand_group_name> <whitespaces> <subcommand_name> <whitespaces> <kwargs>  | <command_name> <whitespaces> <subcommand_name> <whitespaces> <kwargs> | <command_name> <whitespaces> <kwargs>
+<command> ::= 
+  <command_name> <whitespaces> <subcommand_group_name> <whitespaces> <subcommand_name> <whitespaces> <kwargs> 
+| <command_name> <whitespaces> <subcommand_group_name> <whitespaces> <subcommand_name>
+| <command_name> <whitespaces> <subcommand_name> <whitespaces> <kwargs> 
+| <command_name> <whitespaces> <subcommand_name>
+| <command_name> <whitespaces> <kwargs>
+| <command_name>
