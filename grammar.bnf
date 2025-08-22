@@ -2,24 +2,18 @@
 
 <whitespaces> ::=  <whitespace> | <whitespace> <whitespaces> 
 
-<command_name> ::=  ([a-z] | [A-Z]) | ([a-z] | [A-Z]) ([a-z] | [A-Z] | [0-9] | "_" )+ 
-
-<subcommand_name> ::= ([a-z] | [A-Z]) | ([a-z] | [A-Z]) ([a-z] | [A-Z] | [0-9] | "_" )+ 
-
 <keyword> ::= ([a-z] | [A-Z]) | ([a-z] | [A-Z]) ([a-z] | [A-Z] | [0-9] | "_" )+
 
 <value> ::= ([a-z] | [A-Z] | [0-9] | "_" )+ | "\"" ([a-z] | [A-Z] | [0-9] | "_" | <whitespace> )+ "\"" 
 
 <kwargs> ::= <kwarg> | <kwarg> <whitespaces> <kwargs>
 
-<kwarg> ::= <keyword> <whitespaces> ":" <whitespaces> <value> | <keyword> ":" <whitespaces> <value> | <keyword> <whitespaces> ":"  <value> | <keyword> ":"  <value>
+<kwarg> ::= <keyword> <whitespaces> ":" <whitespaces> <value> 
+          | <keyword> ":" <whitespaces> <value> 
+          | <keyword> <whitespaces> ":"  <value> 
+          | <keyword> ":"  <value>
 
-<subcommand_group_name> ::= ([a-z] | [A-Z]) | ([a-z] | [A-Z]) ([a-z] | [A-Z] | [1-9] | "_" )+
+<command> ::= <keyword> <whitespaces> <command>  
+            | <keyword> <whitespaces> <kwargs> 
+            | <keyword>
 
-<command> ::= 
-  <command_name> <whitespaces> <subcommand_group_name> <whitespaces> <subcommand_name> <whitespaces> <kwargs> 
-| <command_name> <whitespaces> <subcommand_group_name> <whitespaces> <subcommand_name>
-| <command_name> <whitespaces> <subcommand_name> <whitespaces> <kwargs> 
-| <command_name> <whitespaces> <subcommand_name>
-| <command_name> <whitespaces> <kwargs>
-| <command_name>
