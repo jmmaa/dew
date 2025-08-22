@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "dew-py"
+description= "A simple parser for discord slash command-like text, written in pure python"
+dynamic = ["version", "readme"]
+authors = [
+    {name = "jma"},
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "dew.__version__"} 
+readme = {file = ["README.md"]}
