@@ -4,12 +4,24 @@ from __future__ import annotations
 import string
 import typing
 
-Kwarg: typing.TypeAlias = tuple[str, str]
+KwargNode: typing.TypeAlias = tuple[str, str]
 
 
-class Command(typing.TypedDict):
+WHITESPACES: typing.Final[str] = " \t\r"
+
+VALID_KEYWORD_FIRST_CHARACTERS = string.ascii_letters + "_"
+VALID_KEYWORD_BODY_CHARACTERS = string.ascii_letters + string.digits + "_"
+
+VALID_UNQUOTED_VALUE_BODY_CHARACTERS = (
+    string.ascii_letters + string.digits + string.punctuation
+)
+
+VALID_QUOTED_VALUE_BODY_CHARACTERS = VALID_UNQUOTED_VALUE_BODY_CHARACTERS + WHITESPACES
+
+
+class CommandNode(typing.TypedDict):
     name: str
-    tail: Command | list[Kwarg]
+    tail: CommandNode | list[KwargNode]
 
 
 class ParserContext:
@@ -26,7 +38,7 @@ class ParserContext:
 
             return self.input[self.pos + 1]
 
-        except Exception:
+        except IndexError:
             return None
 
     def consume(self):
@@ -42,7 +54,7 @@ class ParserContext:
     def set_checkpoint(self):
         self.__checkpoint = self.pos
 
-    def get_remaining_string(self):
+    def get_remaining_characters(self):
         if self.peek() is not None:
             remaining = self.input[self.pos + 1 :]
 
@@ -54,14 +66,11 @@ class ParserContext:
             return []
 
 
-whitespace_chars = [" "]
-
-
 def escape_whitespaces(ctx: ParserContext):
     peeked = ctx.peek()
 
     if peeked:
-        if peeked in whitespace_chars:
+        if peeked in [" "]:
             ctx.consume()
 
             escape_whitespaces(ctx)
@@ -71,10 +80,10 @@ def parse_keyword(ctx: ParserContext, acc: str = "") -> str:
     peeked = ctx.peek()
 
     if peeked:
-        if peeked in string.ascii_letters + "_":
-            consumed = ctx.consume()
+        if peeked in VALID_KEYWORD_FIRST_CHARACTERS:
+            # consumed = ctx.consume()
 
-            acc = acc + consumed
+            # acc = acc + consumed
 
             return __parse_keyword_recursive(ctx, acc)
 
@@ -89,15 +98,13 @@ def parse_keyword(ctx: ParserContext, acc: str = "") -> str:
 
 def __parse_keyword_recursive(ctx: ParserContext, acc: str = "") -> str:
     peeked = ctx.peek()
-
     if peeked:
-        if peeked in string.ascii_letters + string.digits + "_":
+        if peeked in VALID_KEYWORD_BODY_CHARACTERS:
             consumed = ctx.consume()
 
-            if consumed:
-                acc = acc + consumed
+            acc = acc + consumed
 
-                return __parse_keyword_recursive(ctx, acc)
+            return __parse_keyword_recursive(ctx, acc)
 
     return acc
 
@@ -106,18 +113,19 @@ def parse_value(ctx: ParserContext, acc: str = "") -> str:
     peeked = ctx.peek()
 
     if peeked:
-        if peeked in string.ascii_letters + string.digits + "_":
-            consumed = ctx.consume()
-
-            acc = acc + consumed
-
-            return __parse_value_recursive(ctx, acc)
-
         # for handling quoted inputs
         if peeked == '"':
-            consumed = ctx.consume()  # escape quote
+            ctx.consume()  # escape quote
 
-            return __parse_quoted_value_recursive(ctx, acc)
+            return __parse_double_quoted_value_recursive(ctx, acc)
+
+        elif peeked == "'":
+            ctx.consume()  # escape quote
+
+            return __parse_single_quoted_value_recursive(ctx, acc)
+
+        elif peeked in VALID_UNQUOTED_VALUE_BODY_CHARACTERS:
+            return __parse_value_recursive(ctx, acc)
 
         else:
             raise Exception(
@@ -132,7 +140,7 @@ def __parse_value_recursive(ctx: ParserContext, acc: str = "") -> str:
     peeked = ctx.peek()
 
     if peeked:
-        if peeked in string.ascii_letters + string.digits + "_":
+        if peeked in VALID_UNQUOTED_VALUE_BODY_CHARACTERS:
             consumed = ctx.consume()
 
             if consumed:
@@ -143,26 +151,82 @@ def __parse_value_recursive(ctx: ParserContext, acc: str = "") -> str:
     return acc
 
 
-def __parse_quoted_value_recursive(ctx: ParserContext, acc: str = "") -> str:
+def __parse_double_quoted_value_recursive(ctx: ParserContext, acc: str = "") -> str:
     peeked = ctx.peek()
 
     if peeked:
-        if peeked != '"':
+        if peeked == "\\":
+            ctx.consume()  # escape backward slash
+
+            escaped = ctx.peek()
+
+            if escaped:
+                print("ESCAPED!:", escaped)
+                consumed = ctx.consume()  # escape character
+
+                acc = acc + consumed
+
+                return __parse_double_quoted_value_recursive(ctx, acc)
+
+            else:
+                raise Exception("expected an escape character")
+        elif peeked != '"':
             consumed = ctx.consume()
 
             acc = acc + consumed
 
-            return __parse_quoted_value_recursive(ctx, acc)
+            return __parse_double_quoted_value_recursive(ctx, acc)
 
-        else:
-            consumed = ctx.consume()  # escape quote
+        elif peeked == '"':
+            ctx.consume()  # escape quote
 
             return acc
 
-    raise Exception("expected a '\"'")
+        else:
+            raise Exception('expected a character or """')
+
+    raise Exception('expected a """')
 
 
-def parse_kwarg(ctx: ParserContext) -> Kwarg:
+def __parse_single_quoted_value_recursive(ctx: ParserContext, acc: str = "") -> str:
+    peeked = ctx.peek()
+
+    if peeked:
+        if peeked == "\\":
+            ctx.consume()  # escape backward slash
+
+            escaped = ctx.peek()
+
+            if escaped:
+                print("ESCAPED!:", escaped)
+                consumed = ctx.consume()  # escape character
+
+                acc = acc + consumed
+
+                return __parse_single_quoted_value_recursive(ctx, acc)
+
+            else:
+                raise Exception("expected an escape character")
+
+        elif peeked != "'":
+            consumed = ctx.consume()
+
+            acc = acc + consumed
+
+            return __parse_single_quoted_value_recursive(ctx, acc)
+
+        elif peeked == "'":
+            ctx.consume()  # escape quote
+
+            return acc
+
+        else:
+            raise Exception('expected a character or "\'"')
+
+    raise Exception('expected a "\'"')
+
+
+def parse_kwarg(ctx: ParserContext) -> KwargNode:
     keyword = parse_keyword(ctx)
 
     escape_whitespaces(ctx)
@@ -185,7 +249,7 @@ def parse_kwarg(ctx: ParserContext) -> Kwarg:
         raise Exception("expected ':' but no characters left")
 
 
-def parse_kwargs(ctx, acc: list[tuple[str, str]]) -> list[Kwarg]:
+def parse_kwargs(ctx, acc: list[tuple[str, str]]) -> list[KwargNode]:
     peeked = ctx.peek()
 
     if peeked:
@@ -195,7 +259,7 @@ def parse_kwargs(ctx, acc: list[tuple[str, str]]) -> list[Kwarg]:
         raise Exception("expected a character but no characters left")
 
 
-def __parse_kwargs_recursive(ctx, acc: list[tuple[str, str]]) -> list[Kwarg]:
+def __parse_kwargs_recursive(ctx, acc: list[tuple[str, str]]) -> list[KwargNode]:
     peeked = ctx.peek()
 
     if peeked:
@@ -209,11 +273,11 @@ def __parse_kwargs_recursive(ctx, acc: list[tuple[str, str]]) -> list[Kwarg]:
 
 
 def check_unparsed(ctx):
-    if len(ctx.get_remaining_string()) != 0:
-        raise Exception(f"unparsed characters '{ctx.get_remaining_string()}'")
+    if len(ctx.get_remaining_characters()) != 0:
+        raise Exception(f"unparsed characters '{ctx.get_remaining_characters()}'")
 
 
-def parse_command(ctx) -> Command:
+def parse_command(ctx: ParserContext) -> CommandNode:
     # try parsing as a command name with subcommand
 
     old_pos = ctx.pos
@@ -229,7 +293,7 @@ def parse_command(ctx) -> Command:
 
         return {"name": keyword, "tail": command}
 
-    except Exception:
+    except Exception as e:
         ctx.pos = old_pos
 
     # try parsing as a command name with kwargs
@@ -245,7 +309,7 @@ def parse_command(ctx) -> Command:
 
         return {"name": keyword, "tail": kwargs}
 
-    except Exception:
+    except Exception as e:
         ctx.pos = old_pos
 
     # try parsing as a command name only
@@ -256,10 +320,10 @@ def parse_command(ctx) -> Command:
 
         return {"name": keyword, "tail": []}
 
-    except Exception:
+    except Exception as e:
         ctx.pos = old_pos
 
-        raise Exception(f"failed parsing command '{ctx.get_remaining_string()}'")
+        raise Exception(f"failed parsing command '{ctx.get_remaining_characters()}'")
 
 
 def parse(input: str):
