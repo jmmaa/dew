@@ -4,33 +4,34 @@ from __future__ import annotations
 import string
 import typing
 
-KwargNode: typing.TypeAlias = tuple[str, str]
-
+from dew.types import CommandNode, KwargNode, KwargNodes
 
 WHITESPACES: typing.Final[str] = " \t\r"
 
-VALID_KEYWORD_FIRST_CHARACTERS = string.ascii_letters + "_"
-VALID_KEYWORD_BODY_CHARACTERS = string.ascii_letters + string.digits + "_"
+VALID_KEYWORD_FIRST_CHARACTERS: typing.Final[str] = string.ascii_letters + "_"
 
-VALID_UNQUOTED_VALUE_BODY_CHARACTERS = (
+
+VALID_KEYWORD_BODY_CHARACTERS: typing.Final[str] = (
+    string.ascii_letters + string.digits + "_"
+)
+
+VALID_UNQUOTED_VALUE_BODY_CHARACTERS: typing.Final[str] = (
     string.ascii_letters + string.digits + string.punctuation
 )
 
-VALID_QUOTED_VALUE_BODY_CHARACTERS = VALID_UNQUOTED_VALUE_BODY_CHARACTERS + WHITESPACES
-
-
-class CommandNode(typing.TypedDict):
-    name: str
-    tail: CommandNode | list[KwargNode]
+VALID_QUOTED_VALUE_BODY_CHARACTERS: typing.Final[str] = (
+    VALID_UNQUOTED_VALUE_BODY_CHARACTERS + WHITESPACES
+)
 
 
 class ParserContext:
+    """The context of the parser"""
+
     def __init__(self, input: str) -> None:
         self.pos = -1
         self.input = input
 
         self.__peeked = False
-        self.__checkpoint = 0
 
     def peek(self):
         try:
@@ -51,9 +52,6 @@ class ParserContext:
 
         raise Exception("consumed an unpeeked character")
 
-    def set_checkpoint(self):
-        self.__checkpoint = self.pos
-
     def get_remaining_characters(self):
         if self.peek() is not None:
             remaining = self.input[self.pos + 1 :]
@@ -70,7 +68,7 @@ def escape_whitespaces(ctx: ParserContext):
     peeked = ctx.peek()
 
     if peeked:
-        if peeked in [" "]:
+        if peeked in WHITESPACES:
             ctx.consume()
 
             escape_whitespaces(ctx)
@@ -81,10 +79,6 @@ def parse_keyword(ctx: ParserContext, acc: str = "") -> str:
 
     if peeked:
         if peeked in VALID_KEYWORD_FIRST_CHARACTERS:
-            # consumed = ctx.consume()
-
-            # acc = acc + consumed
-
             return __parse_keyword_recursive(ctx, acc)
 
         else:
@@ -249,7 +243,7 @@ def parse_kwarg(ctx: ParserContext) -> KwargNode:
         raise Exception("expected ':' but no characters left")
 
 
-def parse_kwargs(ctx, acc: list[tuple[str, str]]) -> list[KwargNode]:
+def parse_kwargs(ctx, acc: KwargNodes) -> KwargNodes:
     peeked = ctx.peek()
 
     if peeked:
@@ -259,7 +253,7 @@ def parse_kwargs(ctx, acc: list[tuple[str, str]]) -> list[KwargNode]:
         raise Exception("expected a character but no characters left")
 
 
-def __parse_kwargs_recursive(ctx, acc: list[tuple[str, str]]) -> list[KwargNode]:
+def __parse_kwargs_recursive(ctx, acc: KwargNodes) -> KwargNodes:
     peeked = ctx.peek()
 
     if peeked:
@@ -293,7 +287,7 @@ def parse_command(ctx: ParserContext) -> CommandNode:
 
         return {"name": keyword, "tail": command}
 
-    except Exception as e:
+    except Exception:
         ctx.pos = old_pos
 
     # try parsing as a command name with kwargs
@@ -309,7 +303,7 @@ def parse_command(ctx: ParserContext) -> CommandNode:
 
         return {"name": keyword, "tail": kwargs}
 
-    except Exception as e:
+    except Exception:
         ctx.pos = old_pos
 
     # try parsing as a command name only
@@ -320,7 +314,7 @@ def parse_command(ctx: ParserContext) -> CommandNode:
 
         return {"name": keyword, "tail": []}
 
-    except Exception as e:
+    except Exception:
         ctx.pos = old_pos
 
         raise Exception(f"failed parsing command '{ctx.get_remaining_characters()}'")

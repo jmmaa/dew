@@ -23,17 +23,26 @@ SOFTWARE.
 
 """
 
-import typing
+import typing as t
 
 
-__author__: typing.Final[str] = "jma"
-
-__email__: typing.Final[str] = "withketa@gmail.com"
-
-__version__: typing.Final[str] = "0.0.1_dev2"
-
-__license__: typing.Final[str] = "MIT"
+from dew.parser import *
+from dew.utils import *
+from dew.types import *
 
 
-from .parser import *
-from .utils import *
+__all__ = [
+    "KwargNode",
+    "KwargNodes",
+    "CommandNode",
+    "ParserContext",
+    "parse",
+]
+
+__author__: t.Final[str] = "jma"
+
+__email__: t.Final[str] = "withketa@gmail.com"
+
+__version__: t.Final[str] = "0.0.1_dev3"
+
+__license__: t.Final[str] = "MIT"

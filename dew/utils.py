@@ -1,8 +1,7 @@
-import typing
-from dew import CommandNode, KwargNode
+from dew import CommandNode, KwargNodes
 
 
-def get_kwargs(node: CommandNode) -> list[KwargNode]:
+def get_kwargs(node: CommandNode) -> KwargNodes:
     tail = node["tail"]
 
     if isinstance(tail, dict):
@@ -20,27 +19,7 @@ def __get_keyword_seq(node: CommandNode, acc: list[str]) -> list[str]:
     tail = node["tail"]
 
     if isinstance(tail, dict):
-        new_acc = []
-
-        new_acc.extend(acc)
-        new_acc.append(tail["name"])
-
-        return __get_keyword_seq(tail, new_acc)
+        return __get_keyword_seq(tail, [*acc, tail["name"]])
 
     else:
         return acc
-
-
-def inspect(
-    node: CommandNode, func: typing.Callable[[CommandNode | list[KwargNode]], None]
-):
-    tail = node["tail"]
-
-    if isinstance(tail, dict):
-        func(tail)
-
-        return inspect(tail, func)
-
-    else:
-        func(tail)
-        return tail
