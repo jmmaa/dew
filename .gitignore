@@ -4,6 +4,9 @@ __pycache__
 .pytest_cache
 
 # python build
-build
+/build
 *.egg-info
 dist
+
+# tox
+.tox
