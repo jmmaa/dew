@@ -1,6 +1,6 @@
 # Dew
 
-A simple parser for discord slash command-like text, written in pure python
+A simple command language inspired from discord slash commands
 
 ```python
 import pprint as pp

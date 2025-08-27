@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dew-py"
-description= "A simple parser for discord slash command-like text, written in pure python"
+description= "A simple command language inspired from discord slash commands"
 dynamic = ["version", "readme"]
 authors = [
     {name = "jma"},
@@ -14,3 +14,15 @@ authors = [
 [tool.setuptools.dynamic]
 version = {attr = "dew.__version__"} 
 readme = {file = ["README.md"]}
+
+[tool.tox]
+requires = ["tox>=4"]
+env_list = ["format", "3.11", "3.10"]
+
+[tool.tox.env_run_base]
+description = "run unit tests"
+deps = [
+    "pytest>=8",
+    "pytest-sugar"
+]
+commands = [["pytest", { replace = "posargs", default = ["tests"], extend = true }]]
