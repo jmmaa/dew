@@ -1,5 +1,6 @@
 from __future__ import annotations
 import string
+
 import typing_extensions as t
 
 from dew.types import CommandNode, KwargNode, KwargNodes
@@ -216,7 +217,7 @@ def __parse_single_quoted_value_recursive(ctx: ParserContext, acc: str = "") -> 
     raise Exception('expected a "\'"')
 
 
-def parse_kwarg(ctx: ParserContext) -> KwargNode:
+def parse_kwarg(ctx: ParserContext) -> "KwargNode":
     keyword = parse_keyword(ctx)
 
     escape_whitespaces(ctx)
@@ -239,7 +240,7 @@ def parse_kwarg(ctx: ParserContext) -> KwargNode:
         raise Exception("expected ':' but no characters left")
 
 
-def parse_kwargs(ctx, acc: KwargNodes) -> KwargNodes:
+def parse_kwargs(ctx, acc: KwargNodes) -> "KwargNodes":
     peeked = ctx.peek()
 
     if peeked:
