@@ -2,6 +2,8 @@ from dew import CommandNode, KwargNodes
 
 
 def get_kwargs(node: CommandNode) -> KwargNodes:
+    """a utility function to easily get the kwargs of a command"""
+
     tail = node["tail"]
 
     if isinstance(tail, dict):
@@ -12,6 +14,8 @@ def get_kwargs(node: CommandNode) -> KwargNodes:
 
 
 def get_keyword_seq(node: CommandNode) -> list[str]:
+    """a utility function to easily get the keyword sequence of a command"""
+
     return __get_keyword_seq(node, [node["name"]])
 
 

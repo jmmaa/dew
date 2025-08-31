@@ -8,7 +8,6 @@ The keyword argument node of the syntax tree
 
 a tuple where the 1st value is
 the keyword and the second is the value
-
 """
 
 KwargNodes: t.TypeAlias = list[KwargNode]
@@ -22,7 +21,4 @@ class CommandNode(t.TypedDict):
     """name of the command node"""
 
     tail: CommandNode | KwargNodes
-    """
-    the subsequent node of the current command 
-    it can either be a :py:`CommandNode` or :py:`KwargNodes`
-    """
+    """the subsequent node of the command. It can either be a `CommandNode` or `KwargNodes`"""

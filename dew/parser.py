@@ -1,25 +1,21 @@
 from __future__ import annotations
-
-
 import string
-import typing
+import typing_extensions as t
 
 from dew.types import CommandNode, KwargNode, KwargNodes
 
-WHITESPACES: typing.Final[str] = " \t\r"
+WHITESPACES: t.Final[str] = " \t\r"
 
-VALID_KEYWORD_FIRST_CHARACTERS: typing.Final[str] = string.ascii_letters + "_"
+VALID_KEYWORD_FIRST_CHARACTERS: t.Final[str] = string.ascii_letters + "_"
 
 
-VALID_KEYWORD_BODY_CHARACTERS: typing.Final[str] = (
-    string.ascii_letters + string.digits + "_"
-)
+VALID_KEYWORD_BODY_CHARACTERS: t.Final[str] = string.ascii_letters + string.digits + "_"
 
-VALID_UNQUOTED_VALUE_BODY_CHARACTERS: typing.Final[str] = (
+VALID_UNQUOTED_VALUE_BODY_CHARACTERS: t.Final[str] = (
     string.ascii_letters + string.digits + string.punctuation
 )
 
-VALID_QUOTED_VALUE_BODY_CHARACTERS: typing.Final[str] = (
+VALID_QUOTED_VALUE_BODY_CHARACTERS: t.Final[str] = (
     VALID_UNQUOTED_VALUE_BODY_CHARACTERS + WHITESPACES
 )
 
@@ -33,7 +29,7 @@ class ParserContext:
 
         self.__peeked = False
 
-    def peek(self):
+    def peek(self) -> str | None:
         try:
             self.__peeked = True
 
@@ -42,8 +38,8 @@ class ParserContext:
         except IndexError:
             return None
 
-    def consume(self):
-        if self.__peeked:  # need to peek first before consuming
+    def consume(self) -> str:
+        if self.__peeked:  # need to peek first before consuming or else raise an error
             self.pos += 1
 
             self.__peeked = False
