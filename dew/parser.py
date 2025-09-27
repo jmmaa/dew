@@ -7,10 +7,10 @@ from dew.types import CommandNode, KwargNode, KwargNodes
 
 WHITESPACES: t.Final[str] = " \t\r"
 
-VALID_KEYWORD_FIRST_CHARACTERS: t.Final[str] = string.ascii_letters + "_"
+VALID_KEYWORD_FIRST_CHARACTERS: t.Final[str] = string.ascii_letters + "_" + "-"
 
 
-VALID_KEYWORD_BODY_CHARACTERS: t.Final[str] = string.ascii_letters + string.digits + "_"
+VALID_KEYWORD_BODY_CHARACTERS: t.Final[str] = string.ascii_letters + string.digits + "_" + "-"
 
 VALID_UNQUOTED_VALUE_BODY_CHARACTERS: t.Final[str] = (
     string.ascii_letters + string.digits + string.punctuation

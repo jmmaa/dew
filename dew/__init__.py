@@ -43,6 +43,6 @@ __author__: t.Final[str] = "jma"
 
 __email__: t.Final[str] = "withketa@gmail.com"
 
-__version__: t.Final[str] = "0.0.1_dev3"
+__version__: t.Final[str] = "0.0.1_dev4"
 
 __license__: t.Final[str] = "MIT"

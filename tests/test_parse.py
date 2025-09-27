@@ -24,3 +24,14 @@ def test_readme_example():
     assert kwargs[1][1] == "100"
     assert kwargs[2][1] == "150"
     assert kwargs[3][1] == "200"
+
+
+def test_dash_prefix():
+    import dew
+
+    from dew.utils import get_kwargs
+
+    result = dew.parse("addr -aggro")
+
+    if isinstance(result["tail"], dict):
+        assert result["tail"]["name"] == "-aggro"
