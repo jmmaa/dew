@@ -10,3 +10,6 @@ dist
 
 # tox
 .tox
+
+# vscode
+.vscode
