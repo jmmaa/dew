@@ -1,5 +1,5 @@
 
-## Dew<br>![PyPI](https://img.shields.io/pypi/v/dew-py?label=version)
+## Dew <br>![PyPI](https://img.shields.io/pypi/v/dew-py?label=version)
 
 
 A simple command language inspired from discord slash commands
@@ -22,6 +22,12 @@ pp.pprint(result)
 #                             ('r', '100'),
 #                             ('g', '150'),
 #                             ('b', '200')]}}}
+```
+
+### Install
+
+```
+pip install dew-py
 ```
 
 ### Links

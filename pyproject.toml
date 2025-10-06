@@ -4,6 +4,7 @@ build-backend = "setuptools.build_meta"
 
 
 [project]
+requires-python = ">=3.10,<3.13"
 name = "dew-py"
 description= "A simple command language inspired from discord slash commands"
 dynamic = ["version", "readme"]
@@ -13,6 +14,7 @@ authors = [
 dependencies = [
     "typing_extensions==4.15.0"
 ]
+
 
 [project.optional-dependencies]
 test = [
