@@ -1,4 +1,6 @@
-# Dew
+
+## Dew<br>![PyPI](https://img.shields.io/pypi/v/dew-py?label=version)
+
 
 A simple command language inspired from discord slash commands
 
