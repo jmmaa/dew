@@ -29,8 +29,6 @@ def test_readme_example():
 def test_dash_prefix():
     import dew
 
-    from dew.utils import get_kwargs
-
     result = dew.parse("addr -aggro")
 
     if isinstance(result["tail"], dict):
