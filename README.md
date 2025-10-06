@@ -2,7 +2,7 @@
 
 A simple command language inspired from discord slash commands
 
-```python
+```py
 import pprint as pp
 
 import dew
