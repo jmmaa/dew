@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# ruff: noqa: W505
+
 """A simple command language inspired from python functions.
 
 ```py
@@ -29,16 +31,25 @@ import dew
 
 result = dew.parse('add rgb color name="my color" r=100 g=150 b=200')
 
-pp.pprint(result)
-
-# {'args': ['add', 'rgb', 'color'],
-# 'kwargs': [('name', 'my color'), ('r', '100'), ('g', '150'), ('b', '200')]}
+# {
+#     "args": [
+#         "add",
+#         "rgb",
+#         "color"
+#     ],
+#     "kwargs": [
+#         ("name", "my color"),
+#         ("r", "100"),
+#         ("g", "150"),
+#         ("b", "200")
+#     ],
+# }
 ```
 """
 
 import typing as t
 
-from dew.parser import *
+from dew.parser import Command, parse
 
 __all__ = [
     "Command",

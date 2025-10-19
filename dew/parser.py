@@ -1,26 +1,4 @@
-# MIT License
-#
-# Copyright (c) 2025 jma
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
-"""Parser implementation."""
+# ruff: noqa: D100
 
 from __future__ import annotations
 
@@ -72,6 +50,18 @@ TokenType: t.TypeAlias = t.Literal["WHITESPACES", "VALUE", "ASSIGN_OP"]
 Token: t.TypeAlias = tuple[TokenType, str]
 
 
+class StringError(Exception):
+    """Error Class for string-related errors."""
+
+
+class TokenizerError(Exception):
+    """Error Class for tokenization-related errors."""
+
+
+class ParserError(Exception):
+    """Error Class for parsing-related errors."""
+
+
 class Command(t.TypedDict):
     """The `dict` representation of the command data."""
 
@@ -86,34 +76,37 @@ class Command(t.TypedDict):
     """
 
 
-class DewStr(str):
-    """A class that subclasses `str`.
+@dataclass
+class Tokenizer:
+    """The tokenizer class for converting input string to tokens.
 
-    This provides necessary methods for parsing logic.
+    Attributes:
+        input (DewStr): A custom string derived from `DewStr` class.
     """
 
-    def __new__(cls, *args, **kwargs):
-        """A constructor method, used to construct immutable class `str`."""
-        cls.pos = -1
-        cls.__peeked = False
+    input: str
 
-        return str.__new__(cls, *args, **kwargs)
+    pos: int = -1
+
+    _peeked: bool = False
 
     def peek(self) -> str | None:
         """Peeks the current character to focus on processing.
 
         Note:
-            This has to be called first before `DewStr.consume()` or else it will throw
-            an `Exception`. This is to prevent consuming characters that may eventually
-            cause an `IndexError`
+            This has to be called first before `DewStr.consume()` or
+            else it will throw an `Exception`. This is to prevent
+            consuming characters that may eventually cause an
+            `IndexError`
 
         Returns:
-            str | None: The peeked character, `None` if already in end of file.
+            str | None: The peeked character, `None` if already in end
+            of file.
         """
         try:
-            self.__peeked = True
+            self._peeked = True
 
-            return self[self.pos + 1]
+            return self.input[self.pos + 1]
 
         except IndexError:
             return None
@@ -125,76 +118,69 @@ class DewStr(str):
             str: The consumed character.
 
         Raises:
-            Exception: raised when this method is used without calling `DewStr.peek()` first.
+            Exception: raised when this method is used without calling
+            `DewStr.peek()` first.
         """
-        if self.__peeked:  # need to peek first before consuming or else raise an error
+        if self._peeked:  # need to peek first before consuming or else raise an error
             self.pos += 1
-            self.__peeked = False
+            self._peeked = False
 
-            return self[self.pos]
+            return self.input[self.pos]
 
-        raise Exception("consumed an unpeeked character")
+        err = "consumed an unpeeked character"
+
+        raise StringError(err)
 
     def get_remaining_string(self) -> str:
         """Gets the remaining string to peek/consume.
 
         Returns:
-            str: The remaining string, if theres no string left, it will return an empty string asdasdsaddasdasdadadadasdadad
+            str: The remaining string, if theres no string left, it will
+            return an empty string.
         """
         if self.peek() is not None:
-            remaining = self[self.pos + 1 :]
+            remaining = self.input[self.pos + 1 :]
 
-            self.__peeked = False
+            self._peeked = False
 
             return remaining
 
-        else:
-            return ""
+        return ""
 
-
-@dataclass
-class Tokenizer:
-    """The tokenizer class for converting input string to tokens.
-
-    Attributes:
-        input (DewStr): A custom string derived from `DewStr` class.
-    """
-
-    input: DewStr
-
-    def __escape(self):
-        self.input.consume()  # skip the escape character
-        peeked = self.input.peek()
+    def __escape(self) -> str:
+        self.consume()  # skip the escape character
+        peeked = self.peek()
 
         if peeked:
-            return self.input.consume()
+            return self.consume()
 
-        else:
-            raise Exception(f"expected a character to escape, found '{peeked}'")
+        err = f"expected a character to escape, found '{peeked}'"
 
-    def __tokenize_whitespace(self):
-        peeked = self.input.peek()
+        raise TokenizerError(err)
 
-        whitespaces = str()
+    def __tokenize_whitespace(self) -> Token:
+        peeked = self.peek()
+
+        whitespaces = ""
 
         while peeked is not None:
             if peeked in WHITESPACES:
-                whitespaces += self.input.consume()
+                whitespaces += self.consume()
 
             else:
                 break
 
-            peeked = self.input.peek()
+            peeked = self.peek()
 
         return "WHITESPACES", whitespaces
 
-    def __tokenize_unquoted_value(self):
-        peeked = self.input.peek()
+    def __tokenize_unquoted_value(self) -> Token:
+        peeked = self.peek()
 
-        unquoted_value_characters = str()
+        unquoted_value_characters = ""
         while peeked is not None:
             if peeked in VALID_VALUE_CHARACTERS:
-                unquoted_value_characters += self.input.consume()
+                unquoted_value_characters += self.consume()
 
             elif peeked == ESCAPE_CHARACTER:
                 unquoted_value_characters += self.__escape()
@@ -202,67 +188,71 @@ class Tokenizer:
             else:
                 break
 
-            peeked = self.input.peek()
+            peeked = self.peek()
         return "VALUE", unquoted_value_characters
 
-    def __tokenize_double_quoted_value(self):
-        self.input.consume()  # escape the starting quotes
+    def __tokenize_double_quoted_value(self) -> Token:
+        self.consume()  # escape the starting quotes
 
-        peeked = self.input.peek()
-        double_quoted_value_characters = str()
+        peeked = self.peek()
+        double_quoted_value_characters = ""
 
         while peeked is not None:
             if peeked == DOUBLE_QUOTES:
-                self.input.consume()  # escape the ending quotes
+                self.consume()  # escape the ending quotes
                 break
 
-            elif peeked in (
+            if peeked in (
                 VALID_VALUE_CHARACTERS
                 + ASSIGNMENT_OPERATOR
                 + SINGLE_QUOTE
                 + WHITESPACES
             ):
-                double_quoted_value_characters += self.input.consume()
+                double_quoted_value_characters += self.consume()
 
             elif peeked == ESCAPE_CHARACTER:
                 double_quoted_value_characters += self.__escape()
 
             else:
-                raise Exception(f"unknown character '{peeked}'")
+                err = f"unknown character '{peeked}'"
 
-            peeked = self.input.peek()
+                raise TokenizerError(err)
+
+            peeked = self.peek()
 
         return "VALUE", double_quoted_value_characters
 
-    def __tokenize_single_quoted_value(self):
-        self.input.consume()  # escape the quotes
+    def __tokenize_single_quoted_value(self) -> Token:
+        self.consume()  # escape the quotes
 
-        peeked = self.input.peek()
-        single_quoted_value_characters = str()
+        peeked = self.peek()
+        single_quoted_value_characters = ""
 
         while peeked is not None:
             if peeked == SINGLE_QUOTE:
-                self.input.consume()  # escape the quotes
+                self.consume()  # escape the quotes
                 break
 
-            elif peeked in (
+            if peeked in (
                 VALID_VALUE_CHARACTERS
                 + ASSIGNMENT_OPERATOR
                 + SINGLE_QUOTE
                 + WHITESPACES
             ):
-                single_quoted_value_characters += self.input.consume()
+                single_quoted_value_characters += self.consume()
 
             elif peeked == ESCAPE_CHARACTER:
                 single_quoted_value_characters += self.__escape()
 
             else:
-                raise Exception(f"unknown character '{peeked}'")
+                err = f"unknown character '{peeked}'"
+
+                raise TokenizerError(err)
 
         return "VALUE", single_quoted_value_characters
 
-    def __tokenize_assignment_operator(self):
-        value = self.input.consume()
+    def __tokenize_assignment_operator(self) -> Token:
+        value = self.consume()
 
         return "ASSIGN_OP", value
 
@@ -275,7 +265,7 @@ class Tokenizer:
         tokens: list[Token]
         tokens = []
 
-        peeked = self.input.peek()
+        peeked = self.peek()
         while peeked is not None:
             if peeked in WHITESPACES:
                 tokens.append(self.__tokenize_whitespace())
@@ -293,9 +283,11 @@ class Tokenizer:
                 tokens.append(self.__tokenize_assignment_operator())
 
             else:
-                raise Exception(f"unknown character '{peeked}'")
+                err = f"unknown character '{peeked}'"
 
-            peeked = self.input.peek()
+                raise TokenizerError(err)
+
+            peeked = self.peek()
 
         return tokens
 
@@ -310,25 +302,26 @@ class Parser:
 
     tokens: list[Token]
 
-    def __peek_token(self):
+    def __peek_token(self) -> Token | None:
         try:
             return self.tokens[0]
         except IndexError:
             return None
 
-    def __consume_token(self):
+    def __consume_token(self) -> Token | None:
         return self.tokens.pop(0)
 
     def __escape_whitespace(self) -> None:
         peeked = self.__peek_token()
 
-        if peeked:
-            if peeked[0] == "WHITESPACES":
-                self.__consume_token()
+        if peeked is not None and peeked[0] == "WHITESPACES":
+            self.__consume_token()
 
-    def __check_unparsed(self):
+    def __check_unparsed(self) -> None:
         if len(self.tokens) != 0:
-            raise Exception(f"unparsed tokens: {self.tokens}")
+            err = f"unparsed tokens: {self.tokens}"
+
+            raise ParserError(err)
 
     def __parse_arg(self) -> str:
         peeked = self.__peek_token()
@@ -337,17 +330,22 @@ class Parser:
             if peeked[0] == "VALUE":
                 token = self.__consume_token()
 
-                return token[1]
+                if token:
+                    return token[1]
 
-            else:
-                raise Exception(f"expected value token, found {peeked}")
-        else:
-            raise Exception("expected value token, found None")
+                err = "expected value token, found None"
+                raise ParserError(err)
+
+            err = f"expected value token, found {peeked}"
+            raise ParserError(err)
+
+        err = "expected value token, found None"
+        raise ParserError(err)
 
     def __parse_args(self) -> list[str]:
         return self.__recursive_parse_args([])
 
-    def __recursive_parse_args(self, acc: list[str]):
+    def __recursive_parse_args(self, acc: list[str]) -> list[str]:
         peeked = self.__peek_token()
 
         if peeked:
@@ -362,21 +360,20 @@ class Parser:
                     if peeked[0] == "VALUE":
                         return self.__recursive_parse_args(new_acc)
 
-                    elif peeked[0] == "ASSIGN_OP":
+                    if peeked[0] == "ASSIGN_OP":
                         self.tokens = tokens
                         return acc
 
-                    else:
-                        raise Exception(f"unknown token error: {peeked}")
+                    err = f"unknown token: {peeked}"
+                    raise ParserError(err)
 
-                else:
-                    return new_acc
-            else:
-                return acc
-        else:
+                return new_acc
+
             return acc
 
-    def __parse_assign_op(self):
+        return acc
+
+    def __parse_assign_op(self) -> None:
         peeked = self.__peek_token()
 
         if peeked:
@@ -386,34 +383,36 @@ class Parser:
                 self.__escape_whitespace()
 
             else:
-                raise Exception(f"expected a assign_operator token, found {peeked}")
+                err = f"expected a assign_operator token, found {peeked}"
+                raise ParserError(err)
         else:
-            raise Exception("expected a assign_operator token, found None")
+            err = "expected a assign_operator token, found None"
+            raise ParserError(err)
 
-    def __parse_kwarg(self):
+    def __parse_kwarg(self) -> tuple[str, str]:
         peeked = self.__peek_token()
 
-        if peeked:
-            if peeked[0] == "VALUE":
-                kwarg_name = self.__parse_arg()
+        if peeked and peeked[0] == "VALUE":
+            kwarg_name = self.__parse_arg()
 
-                self.__escape_whitespace()
-                self.__parse_assign_op()
-                self.__escape_whitespace()
+            self.__escape_whitespace()
+            self.__parse_assign_op()
+            self.__escape_whitespace()
 
-                kwarg_value = self.__parse_arg()
+            kwarg_value = self.__parse_arg()
 
-                return kwarg_name, kwarg_value
+            return kwarg_name, kwarg_value
 
-            else:
-                raise Exception(f"expected value token, found {peeked}")
-        else:
-            raise Exception("expected value token, found None")
+        err = f"expected value token, found {peeked}"
+        raise ParserError(err)
 
-    def __parse_kwargs(self):
+    def __parse_kwargs(self) -> list[tuple[str, str]]:
         return self.__recursive_parse_kwargs([])
 
-    def __recursive_parse_kwargs(self, acc: list[tuple[str, str]]):
+    def __recursive_parse_kwargs(
+        self,
+        acc: list[tuple[str, str]],
+    ) -> list[tuple[str, str]]:
         peeked = self.__peek_token()
 
         if peeked:
@@ -423,10 +422,10 @@ class Parser:
                 self.__escape_whitespace()
                 return self.__recursive_parse_kwargs(acc)
 
-            else:
-                raise Exception(f"unknown token error: {peeked}")
-        else:
-            return acc
+            err = f"expected value token, found {peeked}"
+            raise ParserError(err)
+
+        return acc
 
     def parse(self) -> Command:
         """Parses the tokens into `Command`.
@@ -434,24 +433,26 @@ class Parser:
         Returns:
             `Command`: The parsed command data.
         """
+        self.__escape_whitespace()
+
         args = self.__parse_args()
         self.__escape_whitespace()
+
         kwargs = self.__parse_kwargs()
         self.__check_unparsed()
 
         return {"args": args, "kwargs": kwargs}
 
 
-def parse(input: str):
+def parse(inp: str) -> Command:
     """Parses the dew command language into `Command`.
+
+    Parameters:
+        inp (str): The input to be parsed.
 
     Returns:
         Command: The parsed command data.
     """
-    string = DewStr(input)
+    tokens = Tokenizer(inp).tokenize()
 
-    tokens = Tokenizer(string).tokenize()
-
-    result = Parser(tokens).parse()
-
-    return result
+    return Parser(tokens).parse()
