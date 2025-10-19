@@ -1,40 +1,45 @@
 <whitespace> ::= " "
-
-<punctuation> ::= "#" | "$" | "%" | "&" | "'" | "(" | ")" | "*" | "+" | "," | "-" | "." | "/" | ":" | ";" | "<" | "=" | ">" | "?" | "@" | "[" | "\\" |  "]" | "^" | "_" | "`" | "{" | "\"" | "|" | "}" | "~" 
+<assignment_operator> ::= "="
+<escape_character> ::= "\\"
+<double_quotes> ::= "\""
+<single_quote> ::= "'"
+<punctuation> ::= "#" | "$" | "%" | "&" | "(" | ")" | "*" | "+" | "," | "-" | "." | "/" | ";" | "<"  | ">" | "?" | "@" | "[" | ":" |  "]" | "^" | "_" | "`" | "{" | "|" | "}" | "~"
+					| ":" 
 
 <letter> ::= [a-z] | [A-Z]
-
 <number> ::= [0-9] 
 
-<valid_value_character> ::= <letter> | <number> | <punctuation>
+<whitespaces> ::= <whitespace> | <whitespace> <whitespaces>
 
-<whitespaces> ::=  <whitespace> | <whitespace> <whitespaces> 
+<valid_character> ::= <number> | <letter> | <punctuation>
 
-<keyword> ::= ([a-z] | [A-Z]) | ([a-z] | [A-Z]) ([a-z] | [A-Z] | [0-9] )+
+<any_character> ::= <valid_character> | <assignment_operator> | <escape_character> | <double_quotes> | <single_quote>
 
-<unquoted_value> ::= (<valid_value_character>)+
-<double_quoted_value> ::= "\"" (<valid_value_character> | <whitespaces> | "\\" <valid_value_character> )+ "\""
-<single_quoted_value> ::= "'" (<valid_value_character> | <whitespaces> | "\\" <valid_value_character> )+ "'"
+<character> ::= <valid_character> | <escape_character> <any_character>
+<characters> ::= <character> | <character> <characters>
 
-<value> ::= <unquoted_value> 
-		  | <double_quoted_value> 
-          | <single_quoted_value>
+<double_quoted_character> ::= <valid_character> | <assignment_operator> | <single_quote> | <escape_character> <any_character> | <whitespace>
+<double_quoted_characters>  ::= <double_quoted_character> | <double_quoted_character> <double_quoted_characters>
 
+<single_quoted_character> ::= <valid_character> | <assignment_operator> | <double_quotes> | <escape_character> <any_character> | <whitespace>
+<single_quoted_characters> ::= <single_quoted_character> | <single_quoted_character> <single_quoted_characters>
+
+<unquoted_value> ::= <characters>
+<double_quoted_value> ::= <double_quotes> <double_quoted_characters> <double_quotes>
+<single_quoted_value> ::= <single_quote> <single_quoted_characters> <single_quote>
+
+<arg> ::= <unquoted_value> | <double_quoted_value> | <single_quoted_value>
+
+<args> ::= <arg> | <arg> <whitespaces> <args>
+
+
+<kwarg> ::= <arg> <whitespaces> <assignment_operator> <whitespaces> <arg>
+		| <arg> <assignment_operator> <whitespaces> <arg>
+        | <arg> <whitespaces> <assignment_operator> <arg>
+        | <arg> <assignment_operator> <arg>
+        
 <kwargs> ::= <kwarg> | <kwarg> <whitespaces> <kwargs>
 
-<kwarg> ::= <keyword> <whitespaces> ":" <whitespaces> <value> 
-          | <keyword> ":" <whitespaces> <value> 
-          | <keyword> <whitespaces> ":"  <value> 
-          | <keyword> ":"  <value>
-          
-<command> ::= <keyword> <whitespaces> <command>  
-            | <keyword> <whitespaces> <kwargs> 
-            | <keyword>
-
-
-
-
-
-
-
-
+<command> ::= <args>
+		| <args> <whitespaces> <kwargs>
+        | <kwargs>

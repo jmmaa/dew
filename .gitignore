@@ -13,3 +13,9 @@ dist
 
 # vscode
 .vscode
+
+# project specific
+.legacy
+
+# ruff
+.ruff_cache
