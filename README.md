@@ -5,12 +5,12 @@
 A simple command language inspired from python functions.
 
 ```py
-import pprint as pp
 import dew
 
 
 result = dew.parse('add rgb color name="my color" r=100 g=150 b=200')
 
+print(result)
 # {
 #     "args": [
 #         "add",
