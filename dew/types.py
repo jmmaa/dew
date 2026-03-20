@@ -53,6 +53,3 @@ class Argument(t.NamedTuple):
 
     def __repr__(self) -> str:  # noqa: D105
         return f"Argument({self.value})"
-
-
-# TODO (jma): https://github.com/jmmaa/dew/issues/1
