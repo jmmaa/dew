@@ -1,66 +1,75 @@
+from dew.types import KeywordArgument
+
+
 def test_readme_example():
     import dew
 
-    result = dew.parse("add rgb color r=100 g= 150 b=200")
+    args = dew.parse("add rgb color r=100 g= 150 b=200")
 
-    args = result["args"]
+    arg = args.pop(0).value.value
+    assert arg == "add"
 
-    kwargs = result["kwargs"]
+    arg = args.pop(0).value.value
+    assert arg == "rgb"
 
-    assert args[0] == "add"
-    assert args[1] == "rgb"
-    assert args[2] == "color"
+    arg = args.pop(0).value.value
+    assert arg == "color"
 
-    assert kwargs[0][0] == "r" and kwargs[0][1] == "100"
-    assert kwargs[1][0] == "g" and kwargs[1][1] == "150"
-    assert kwargs[2][0] == "b" and kwargs[2][1] == "200"
+    arg = args.pop(0).value
+    assert isinstance(arg, KeywordArgument)
+    assert arg.name == "r"
+    assert arg.value == "100"
+
+    arg = args.pop(0).value
+    assert isinstance(arg, KeywordArgument)
+    assert arg.name == "g"
+    assert arg.value == "150"
+
+    arg = args.pop(0).value
+    assert isinstance(arg, KeywordArgument)
+    assert arg.name == "b"
+    assert arg.value == "200"
 
 
 def test_dash_prefix():
     import dew
 
-    result = dew.parse("addr -aggro")
+    args = dew.parse("addr -aggro")
 
-    args = result["args"]
+    arg = args.pop(0).value.value
+    assert arg == "addr"
 
-    kwargs = result["kwargs"]
-
-    assert args[0] == "addr"
-    assert args[1] == "-aggro"
-
-    assert len(kwargs) == 0
+    arg = args.pop(0).value.value
+    assert arg == "-aggro"
 
 
 def test_escape_chars():
     import dew
 
-    result = dew.parse("addr -\\=aggro")
+    args = dew.parse("addr -\\=aggro")
 
-    args = result["args"]
+    arg = args.pop(0).value.value
+    assert arg == "addr"
 
-    kwargs = result["kwargs"]
+    arg = args.pop(0).value.value
+    assert arg == "-=aggro"
 
-    assert args[0] == "addr"
-    assert args[1] == "-=aggro"
+    args = dew.parse("addr -\\=aggro gg\\\\\\=wp")
 
-    assert len(kwargs) == 0
+    arg = args.pop(0).value.value
+    assert arg == "addr"
 
-    result = dew.parse("addr -\\=aggro gg\\\\\\=wp")
+    arg = args.pop(0).value.value
+    assert arg == "-=aggro"
 
-    args = result["args"]
-
-    kwargs = result["kwargs"]
-
-    assert args[0] == "addr"
-    assert args[1] == "-=aggro"
-    assert args[2] == "gg\\=wp"
-    assert len(kwargs) == 0
+    arg = args.pop(0).value.value
+    assert arg == "gg\\=wp"
 
 
 def test_newlines():
     import dew
 
-    result = dew.parse("""
+    args = dew.parse("""
     
     add rgb color 
     r=100 
@@ -70,14 +79,26 @@ def test_newlines():
 
     """)
 
-    args = result["args"]
+    arg = args.pop(0).value.value
+    assert arg == "add"
 
-    kwargs = result["kwargs"]
+    arg = args.pop(0).value.value
+    assert arg == "rgb"
 
-    assert args[0] == "add"
-    assert args[1] == "rgb"
-    assert args[2] == "color"
+    arg = args.pop(0).value.value
+    assert arg == "color"
 
-    assert kwargs[0][0] == "r" and kwargs[0][1] == "100"
-    assert kwargs[1][0] == "g" and kwargs[1][1] == "150"
-    assert kwargs[2][0] == "b" and kwargs[2][1] == "200"
+    arg = args.pop(0).value
+    assert isinstance(arg, KeywordArgument)
+    assert arg.name == "r"
+    assert arg.value == "100"
+
+    arg = args.pop(0).value
+    assert isinstance(arg, KeywordArgument)
+    assert arg.name == "g"
+    assert arg.value == "150"
+
+    arg = args.pop(0).value
+    assert isinstance(arg, KeywordArgument)
+    assert arg.name == "b"
+    assert arg.value == "200"

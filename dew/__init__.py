@@ -22,28 +22,68 @@
 
 # ruff: noqa: W505
 
-"""A simple command language inspired from python functions.
+"""A mini command language.
 
 ```py
-import pprint as pp
 import dew
 
+args = dew.parse("add rgb color r=100 g= 150 b=200")
 
-result = dew.parse('add rgb color name="my color" r=100 g=150 b=200')
+for arg in args:
+    print(arg)
 
-# {
-#     "args": [
-#         "add",
-#         "rgb",
-#         "color"
-#     ],
-#     "kwargs": [
-#         ("name", "my color"),
-#         ("r", "100"),
-#         ("g", "150"),
-#         ("b", "200")
-#     ],
-# }
+# Argument(PositionalArgument("add"))
+# Argument(PositionalArgument("rgb"))
+# Argument(PositionalArgument("color"))
+# Argument(KeywordArgument("r", "100"))
+# Argument(KeywordArgument("g", "150"))
+# Argument(KeywordArgument("b", "200"))
+```
+
+### Install
+
+```
+pip install git+https://github.com/jmmaa/dew.git
+```
+
+### Links
+
+[BNF grammar](grammar.bnf)
+
+
+### Guide
+
+This command language works similarly to python's function argument behavior. Positional
+Arguments comes first before Keyword Arguments. The keyword arguments are defined by
+using '=' operator while positional arguments wont need any.
+
+```txt
+rgb                             ✔
+rgb color                       ✔
+rgb color r=100 g=100 b=100     ✔
+r=100 rgb                       ✘
+```
+
+Positional Arguments and Keyword Arguments (both key and value) can be defined in 3
+possible ways and will be evaluated all the same manner, however quotes `'` and double
+quotes `"` allow you to add whitespaces on arguments
+```txt
+# positional arguments
+rgb
+'rgb'
+"rgb"
+
+# keyword arguments
+r=100
+'r'='100'
+"r"="100"
+
+# with space
+
+"simple argument"
+'nice argument' = 100
+"very nice argument" = 200
+great_argument = 'this is a great argument'
 ```
 """
 
@@ -60,6 +100,6 @@ __author__: t.Final[str] = "jma"
 
 __email__: t.Final[str] = "withketa@gmail.com"
 
-__version__: t.Final[str] = "2.0.0.dev0"
+__version__: t.Final[str] = "3.0.0.dev0"
 
 __license__: t.Final[str] = "MIT"

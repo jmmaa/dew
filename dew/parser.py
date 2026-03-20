@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
+import dataclasses
 import string
-from dataclasses import dataclass
 
 import typing_extensions as t
+
+from dew.error import ParserError, TokenizerError
+from dew.types import Argument, KeywordArgument, PositionalArgument
 
 WHITESPACES: t.Final[str] = " \t\r\n"
 ASSIGNMENT_OPERATOR: t.Final[str] = "="
 ESCAPE_CHARACTER: t.Final[str] = "\\"
 DOUBLE_QUOTES: t.Final[str] = '"'
 SINGLE_QUOTE: t.Final[str] = "'"
+
 
 PARTIAL_PUNCTUATION: t.Final[str] = (
     string.punctuation.replace(ASSIGNMENT_OPERATOR, "")
@@ -20,10 +24,13 @@ PARTIAL_PUNCTUATION: t.Final[str] = (
     .replace(SINGLE_QUOTE, "")
 )
 
+
 LETTERS: t.Final[str] = string.ascii_letters
 NUMBERS: t.Final[str] = string.digits
 
+
 VALID_VALUE_CHARACTERS: t.Final[str] = LETTERS + NUMBERS + PARTIAL_PUNCTUATION
+
 
 ANY_CHARACTER: t.Final[str] = (
     VALID_VALUE_CHARACTERS
@@ -38,6 +45,7 @@ VALID_UNQUOTED_VALUE_CHARACTERS: t.Final[str] = (
     VALID_VALUE_CHARACTERS + ESCAPE_CHARACTER
 )
 
+
 VALID_DOUBLE_QUOTED_VALUE_CHARACTERS: t.Final[str] = (
     VALID_VALUE_CHARACTERS + ASSIGNMENT_OPERATOR + SINGLE_QUOTE + ESCAPE_CHARACTER
 )
@@ -48,18 +56,6 @@ T = t.TypeVar("T")
 TokenType: t.TypeAlias = t.Literal["WHITESPACES", "VALUE", "ASSIGN_OP"]
 
 Token: t.TypeAlias = tuple[TokenType, str]
-
-
-class StringError(Exception):
-    """Error Class for string-related errors."""
-
-
-class TokenizerError(Exception):
-    """Error Class for tokenization-related errors."""
-
-
-class ParserError(Exception):
-    """Error Class for parsing-related errors."""
 
 
 class Command(t.TypedDict):
@@ -76,7 +72,7 @@ class Command(t.TypedDict):
     """
 
 
-@dataclass
+@dataclasses.dataclass
 class Tokenizer:
     """The tokenizer class for converting input string to tokens.
 
@@ -129,7 +125,7 @@ class Tokenizer:
 
         err = "consumed an unpeeked character"
 
-        raise StringError(err)
+        raise TokenizerError(err)
 
     def get_remaining_string(self) -> str:
         """Gets the remaining string to peek/consume.
@@ -292,7 +288,7 @@ class Tokenizer:
         return tokens
 
 
-@dataclass
+@dataclasses.dataclass
 class Parser:
     """The Parser class for converting list of tokens into `Command`.
 
@@ -323,7 +319,7 @@ class Parser:
 
             raise ParserError(err)
 
-    def __parse_arg(self) -> str:
+    def __parse_arg(self) -> Argument:
         peeked = self.__peek_token()
 
         if peeked:
@@ -331,7 +327,8 @@ class Parser:
                 token = self.__consume_token()
 
                 if token:
-                    return token[1]
+                    value = token[1]
+                    return Argument(PositionalArgument(value))
 
                 err = "expected value token, found None"
                 raise ParserError(err)
@@ -342,10 +339,13 @@ class Parser:
         err = "expected value token, found None"
         raise ParserError(err)
 
-    def __parse_args(self) -> list[str]:
+    def __parse_args(self) -> list[Argument]:
         return self.__recursive_parse_args([])
 
-    def __recursive_parse_args(self, acc: list[str]) -> list[str]:
+    def __recursive_parse_args(
+        self,
+        acc: list[Argument],
+    ) -> list[Argument]:
         peeked = self.__peek_token()
 
         if peeked:
@@ -389,30 +389,30 @@ class Parser:
             err = "expected a assign_operator token, found None"
             raise ParserError(err)
 
-    def __parse_kwarg(self) -> tuple[str, str]:
+    def __parse_kwarg(self) -> Argument:
         peeked = self.__peek_token()
 
         if peeked and peeked[0] == "VALUE":
-            kwarg_name = self.__parse_arg()
+            kwarg_name = self.__parse_arg().value
 
             self.__escape_whitespace()
             self.__parse_assign_op()
             self.__escape_whitespace()
 
-            kwarg_value = self.__parse_arg()
+            kwarg_value = self.__parse_arg().value
 
-            return kwarg_name, kwarg_value
+            return Argument(KeywordArgument(kwarg_name.value, kwarg_value.value))
 
         err = f"expected value token, found {peeked}"
         raise ParserError(err)
 
-    def __parse_kwargs(self) -> list[tuple[str, str]]:
+    def __parse_kwargs(self) -> list[Argument]:
         return self.__recursive_parse_kwargs([])
 
     def __recursive_parse_kwargs(
         self,
-        acc: list[tuple[str, str]],
-    ) -> list[tuple[str, str]]:
+        acc: list[Argument],
+    ) -> list[Argument]:
         peeked = self.__peek_token()
 
         if peeked:
@@ -427,7 +427,7 @@ class Parser:
 
         return acc
 
-    def parse(self) -> Command:
+    def parse(self) -> list[Argument]:
         """Parses the tokens into `Command`.
 
         Returns:
@@ -435,16 +435,16 @@ class Parser:
         """
         self.__escape_whitespace()
 
-        args = self.__parse_args()
+        posargs = self.__parse_args()
         self.__escape_whitespace()
 
         kwargs = self.__parse_kwargs()
         self.__check_unparsed()
 
-        return {"args": args, "kwargs": kwargs}
+        return posargs + kwargs
 
 
-def parse(inp: str) -> Command:
+def parse(inp: str) -> list[Argument]:
     """Parses the dew command language into `Command`.
 
     Parameters:
